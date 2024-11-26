@@ -64,12 +64,15 @@ def openai_completion():
     # Required parameters
     messages = request_data.get('messages')
     model = request_data.get('model', 'perplexity/llama-3.1-sonar-large-128k-online')
+    stream = request_data.get('stream', False)
 
     if not messages:
         abort(400, description="Bad Request: 'messages' is required")
 
     if not api_key:
         abort(400, description="Bad Request: 'api_key' is required")
+
+    print(f"test")
 
     # Optional parameters with defaults
     completion_params = {
@@ -79,7 +82,7 @@ def openai_completion():
         'temperature': request_data.get('temperature', 1.0),
         'top_p': request_data.get('top_p', 1.0),
         'n': request_data.get('n', 1),
-        'stream': True,  # Always true for streaming
+        'stream':  stream, 
         'presence_penalty': request_data.get('presence_penalty', 0),
         'frequency_penalty': request_data.get('frequency_penalty', 0),
         'stop': request_data.get('stop', None),
@@ -98,8 +101,8 @@ def openai_completion():
 
     chunks = client.chat.completions.create(**completion_params)
 
-    # //suport non stream
-    # stream = data.get('stream', False)
+    if( stream == False ):
+        return chunks.model_dump_json()
     
     return Response(
         generate(chunks),
@@ -111,4 +114,6 @@ def openai_completion():
     )
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+
