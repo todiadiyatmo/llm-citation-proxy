@@ -19,7 +19,7 @@ def generate(chunks):
     try:
         citations = []
         for chunk in chunks:
-            logging.debug(f"Streaming event: {chunk.model_dump_json()}")
+            # logging.debug(f"Streaming event: {chunk.model_dump_json()}")
             
             if hasattr(chunk, 'citations') and chunk.citations:
                 citations = chunk.citations
@@ -72,7 +72,9 @@ def openai_completion():
     if not api_key:
         abort(400, description="Bad Request: 'api_key' is required")
 
-    print(f"test")
+    # If there is only one message and it's a system message, change the role to user 
+    if len(messages) == 1 and messages[0]['role'] != "user":
+        messages[0]['role'] = "user"
 
     # Optional parameters with defaults
     completion_params = {
@@ -101,9 +103,18 @@ def openai_completion():
 
     chunks = client.chat.completions.create(**completion_params)
 
-    if( stream == False ):
-        return chunks.model_dump_json()
-    
+    if not stream:
+
+        logging.debug(chunks.model_dump_json())
+
+        return Response(
+            chunks.model_dump_json(),
+            mimetype='application/json',
+            headers={
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache'
+            }
+        )
     return Response(
         generate(chunks),
         mimetype='text/event-stream',
@@ -116,4 +127,3 @@ def openai_completion():
 if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     app.run(host='0.0.0.0', port=5000, debug=debug_mode)
-
