@@ -10,9 +10,8 @@ httpcore_logger = logging.getLogger('httpx')
 httpcore_logger.setLevel(logging.WARNING)
 
 client = OpenAI(
-    # base_url="https://openrouter.ai/api/v1",
     base_url="http://127.0.0.1:5000/api/v1",
-    api_key="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",
+    api_key="-",
     max_retries=1
 )
 
